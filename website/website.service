@@ -1,6 +1,8 @@
 [Unit]
 Description=Wifinet Web Frontend
 ConditionPathExists=/opt/wifinet/
+After=mongodb.service
+Requires=mongodb.service
 
 [Service]
 ExecStart=/usr/local/bin/uwsgi --ini /opt/wifinet/website/website.ini

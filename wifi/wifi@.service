@@ -1,6 +1,8 @@
 [Unit]
 Description=Wifinet Wifi Crawler
 ConditionPathExists=/opt/wifinet/
+After=mongodb.service
+Requires=mongodb.service
 
 [Service]
 StandardOutput=file:/home/pi/mydaemon.log
