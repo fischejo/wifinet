@@ -1,0 +1,5 @@
+Flask==1.1.1
+pymongo==2.4
+scapy==2.4.3
+systemd==0.16.1
+PyRIC==0.1.6.3

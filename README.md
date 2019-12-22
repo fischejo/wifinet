@@ -3,7 +3,6 @@
 ```bash
 # install dependencies
 sudo apt install python3-pip uwsgi uwsgi-plugin-python mongodb
-sudo pip3 install pyw scapy pymongo flask
 
 # download repository
 git clone https://github.com/pecheur/wifinet.git /tmp/wifinet
@@ -12,6 +11,7 @@ git clone https://github.com/pecheur/wifinet.git /tmp/wifinet
 sudo cp -R /tmp/wifinet /opt/wifinet
 sudo cp /opt/wifinet/website/website.service /etc/systemd/system/wifinet-website.service
 sudo cp /opt/wifinet/wifi/wifi@.service /etc/systemd/system/wifinet-wifi@.service
+sudo pip3 install -r opt/wifinet/requirements.txt
 
 # enable services
 sudo systemctl enable --now mongodb
