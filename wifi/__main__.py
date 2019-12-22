@@ -9,6 +9,7 @@ from pymongo import MongoClient
 from pprint import pprint
 from systemd import journal
 import argparse
+import datetime
 
 CHANNEL_COUNT = 13
 MONGO_DB = "mongodb://localhost/networks"
@@ -29,19 +30,32 @@ def scan(iface, channel_weights, mongodb_url) :
     def Packet_info(pkt):
         # finding APs by Beacons (subtype == 8)
         if pkt.haslayer(Dot11Beacon) :
-            db.ap.update({'_id' : pkt.addr2},
-                         {"$set":{'ssid' : pkt.info.decode("utf-8")}},
+            infos = {}
+            # ssid, channel, crypto, rates
+            infos.update(pkt[Dot11Beacon].network_stats())
+            infos['crypto'] = str(infos['crypto'])
+            infos['lastSeen'] = datetime.datetime.now().timestamp()
+            infos['signal'] = pkt[RadioTap].dBm_AntSignal
+
+            db.ap.update({'_id' : pkt.addr2}, {"$set": infos},
+#                          "$inc":{'beacons' : 1},
+#                         },
                          upsert=True)
 
         # finding corresponding clients by Probes
         if pkt.haslayer(Dot11ProbeReq) :
-            channel = m2i(pkt[RadioTap].ChannelFrequency)
-            channel_weights[channel-1] += 1
             ap = {'ap' : pkt.info.decode("utf-8")}
+            infos = {}
+            infos['signal'] = pkt[RadioTap].dBm_AntSignal
+            infos['lastSeen'] = datetime.datetime.now().timestamp()            
+
+            channel= m2i(pkt[RadioTap].ChannelFrequency)            
+            channel_weights[channel-1] += 1
+
             db.client.update({'_id' : str(pkt.addr2)},
                              {
                                  '$addToSet' : { 'ap': ap },
-#                                 '$addToSet' : { 'channel': channel },
+                                 '$set' : infos
                              },
                              upsert=True)
     journal.write("Start sniffing on interface {}".format(iface))
@@ -63,11 +77,11 @@ if __name__ == '__main__':
     journal.write("Interface {} set to promiscuous mode".format(args.iface))
     
     # start scanning
-    p = Process(name='crawler',target=scan, args=(args.iface,channel_weights, args.mongodb))
-    p.start()
+    sniffer = Process(name='sniffer',target=scan, args=(args.iface,channel_weights, args.mongodb))
+    sniffer.start()
 
     journal.write("Start channel hopping on interface {}".format(args.iface))
-    while(True):
+    while(sniffer.is_alive):
         weights = list(channel_weights)
         channels = list(range(1,CHANNEL_COUNT+1))
         ch = choices(channels,weights)[0]    

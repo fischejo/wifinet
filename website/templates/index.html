@@ -104,7 +104,7 @@
 */
 
   
-  d3.json("http://192.168.1.18/rest", function(error, graph) {
+  d3.json("rest", function(error, graph) {
       if (error) throw error;
 
       const simulation = d3.forceSimulation()
@@ -112,7 +112,8 @@
 	    .force('link', d3.forceLink().id(d => d.id))
 	    .force('charge', d3.forceManyBody())
 	    .force('center', d3.forceCenter(width / 2, height / 2))
-	    .on('tick', ticked);
+	    .on('tick', ticked)
+	    .force("collide", d3.forceCollide().radius(30));
 
       /* resizing */
       function updateWindow(){
@@ -128,18 +129,12 @@
       
       simulation.force('link')
 	  .links(graph.links);
-
-      const R = 6;
-
-      
-
-
       let link = svg.selectAll('line')
 	  .data(graph.links)
-	  .enter().append('line');
-
+	  .enter().append('line')
+	  .attr('class', 'link');      
+/*
       link  
-	  .attr('class', 'link')
   	  .on('mouseover.tooltip', function(d) {
       	      tooltip.transition()
         	  .duration(300)
@@ -161,7 +156,7 @@
 	          .style("top", (d3.event.pageY + 10) + "px");
 	  });
       ;
-
+*/
       let node = svg.selectAll('.node')
 	  .data(graph.nodes)
 	  .enter().append('g')
@@ -172,15 +167,39 @@
 		.on("end", dragended));;
 
       node.append('circle')
-	  .attr('r', R)
+	  .attr("r", function(d){
+	      if (d.group == 3 || d.signal > -30 || d.signal < -90) {
+		  return 5;
+	      } else {
+		  var rate =1+(d.signal+30)/60;
+		  return 5+rate*25;
+	      }
+	  })
   	  .attr("fill", function(d) { return color(d.group);}) 	
 	  .on('mouseover.tooltip', function(d) {
       	      tooltip.transition()
         	  .duration(300)
-        	  .style("opacity", .8);
-      	      tooltip.html("Name:" + d.id + "<p/>group:" + d.group)
+        	  .style("opacity", .8)
         	  .style("left", (d3.event.pageX) + "px")
         	  .style("top", (d3.event.pageY + 10) + "px");
+      	      
+	      if (d.group == 1)  /*Known AP*/
+		  tooltip.html("SSID: " + d.ssid + "<br>" +
+			       "MAC: " + d.mac + "<br>" +
+			       "Last seen: " + d.lastSeen + "<br>" +
+			       "Crypto: " + d.crypto + "<br>" +
+			       "Signal: " + d.signal + " dBm<br>" +
+			       "Channel: " + d.channel + "<br>" +
+			       "Alias: " + d.alias);
+	      
+	      else if (d.group == 2) /*Known Client*/
+		  tooltip.html("MAC: " + d.mac + "<br>" +
+			       "Signal: " + d.signal + " dBm<br>" +
+			       "Last seen: " + d.lastSeen + "<br>" +
+			       "Alias: " + d.alias);
+	      else if (d.group == 3) /*Unknown AP */
+		  tooltip.html("SSID: " + d.ssid + "<br>" +
+			       "Alias: " + d.alias);
     	  })
   	  .on('mouseover.fade', fade(0.1))
 	  .on("mouseout.tooltip", function() {
@@ -193,7 +212,7 @@
 	      tooltip.style("left", (d3.event.pageX) + "px")
 	          .style("top", (d3.event.pageY + 10) + "px");
 	  })
-  	  .on('dblclick',releasenode)
+  	  .on('dblclick',alias_promt)
       
       
       node.append('text')
@@ -204,17 +223,22 @@
       var lables = node.append("text")
 	  .text(function(d) {
 	      if (d.group == 1)  /*Known AP*/
-		  return d.id;
+		  return d.ssid;
 	      else if (d.group == 2) /*Known Client*/
-		  return "";
+		  return d.alias;
 	      else if (d.group == 3) /*Unknown AP */
-		  return d.id;
-	      else if (d.group == 4) /*Unknown Client */
-		  return "";
+		  return d.ssid;
 	      else
 		  return "";
 	  })
-	  .attr('x', 8)
+	  .attr('x', function(d) {
+	      if (d.group == 3 || d.signal > -30 || d.signal < -90) {
+		  return 10;
+	      } else {
+		  var rate =1+(d.signal+30)/60;
+		  return 10+rate*25;
+	      }
+	  })
 	  .attr('y', 5);
       
       function ticked() {
@@ -271,7 +295,24 @@
 	  };
       }
 
-      
+      function alias_promt(d) {
+	  var alias = prompt("Choose an Alias:", d.alias);
+	  if (alias == null || alias == "") {
+	  } else {
+	      d.alias = alias
+	  }
+
+	  var client = new XMLHttpRequest();
+
+	  client.open("PUT", "alias", false);
+	  client.setRequestHeader("Content-Type", "text/plain");
+	  client.send(JSON.stringify({
+	      "id" : d.id,
+	      "alias" : alias
+	  }));
+	  if (client.status != 200)
+	      alert("The request did not succeed!\n");	  
+      }      
   })
 
 
