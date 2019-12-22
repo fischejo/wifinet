@@ -15,7 +15,7 @@ db = mongodb.networks
 def rest():
     # nodes
     ap_nodes = [{"id" : ap['ssid'], "group" : 1} for ap in db.ap.find()]
-    client_nodes = [{"id" : client['_id'], "group": 5} for client in db.client.find()]
+    client_nodes = [{"id" : client['_id'], "group": 2} for client in db.client.find()]
     nodes = ap_nodes + client_nodes
 
     # links
@@ -25,9 +25,16 @@ def rest():
     valid_nodes = [node["id"] for node in nodes]
     valid_nodes = list(filter(None, valid_nodes)) #filter empty string
 
-    links = list(filter(lambda link: link["source"] in valid_nodes and link["target"] in valid_nodes, links))
+    
+    unknown_source_nodes =  [{"id" : link['source'], "group" : 3} for link in links if link["source"] not in valid_nodes]
+    unknown_target_nodes =  [{"id" : link['target'], "group" : 4} for link in links if link["target"] not in valid_nodes]    
 
-    return jsonify({'nodes': ap_nodes+client_nodes, 'links' : links})
+    links = list(filter(lambda link: len(link["source"]) and len(link["target"]), links))
+
+    nodes = nodes + unknown_source_nodes + unknown_target_nodes
+    nodes = list(filter(lambda node: len(node["id"]), nodes))    
+    
+    return jsonify({'nodes': nodes, 'links' : links})
 
 @app.route('/')
 def index():

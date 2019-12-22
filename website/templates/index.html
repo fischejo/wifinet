@@ -1,159 +1,232 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <title>Animating Changes in Force Diagram</title>
-    <script src="https://d3js.org/d3.v3.min.js"></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
-    <style>
-      html {
-	  margin: 0;
-	  padding: 0;
-	  height: 100%;
-	  overflow: hidden;
-      }
+<meta charset="utf-8">
+<style>
+  html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+  }
 
-      body {
-	  margin: 0;
-	  padding: 0;
-	  height: 100%;
-	  max-height: 100%;
-	  float: left;
-	  width: 100%;
-      }
+  body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      max-height: 100%;
+      float: left;
+      width: 100%;
+  }
 
-      .link {
-          stroke: #2E2E2E;
-          stroke-width: 2px;
-      }
+  .link {
+      stroke: #c1c1c1;
+      stroke-width: 2px;
+      pointer-events: all;
+  }
 
-      .node {
-          stroke: #fff;
-          stroke-width: 2px;
-      }
-      .textClass {
-          stroke: #323232;
-          font-family: "Lucida Grande", "Droid Sans", Arial, Helvetica, sans-serif;
-          font-weight: normal;
-          stroke-width: .5;
-          font-size: 14px;
-      }
-    </style>
-  </head>
-  <body>
-    <style>
+  .node circle {
+      pointer-events: all;
+      stroke: #777;
+      stroke-width: 1px;
+  }
+  
+  
+  div.tooltip {
+      position: absolute;
+      background-color: white;
+      max-width; 200px;
+      height: auto;
+      padding: 1px;
+      border-style: solid;
+      border-radius: 4px;
+      border-width: 1px;
+      box-shadow: 3px 3px 10px rgba(0, 0, 0, .5);
+      pointer-events: none;
+  }
 
-      .links line {
-	  stroke: #999;
-	  stroke-opacity: 0.6;
-      }
+</style>
+<body>
+</body>
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3-legend/2.24.0/d3-legend.min.js"></script>
+<script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+<script>
 
-      .nodes circle {
-	  stroke: #fff;
-	  stroke-width: 1.5px;
-      }
+  var width = $(window).width();
+  var height = $(window).height(); 
 
-      text {
-	  font-family: sans-serif;
-	  font-size: 10px;
-      }
+  var color = d3.scaleOrdinal(d3.schemeSet3);
+  color(0);
+  color(1);
+  color(2);
+  color(3);
+  color(4);
+  color(5);
+  color(6);
+  color(7);
+  color(8);
+  color(9);
+  color(10);
+  
+  /* tooltip */
+  var tooltip = d3.select("body")
+      .append("div")
+      .attr("class", "tooltip")
+      .style("opacity", 0);
+  
+  /* fullscreen & zooming */
+  var svg = d3.select("body").append("svg")
+      .attr("width", width)
+      .attr("height", height)
+      .call(d3.zoom().on("zoom", function () {
+	  svg.attr("transform", d3.event.transform)
+      }))
+      .append("g");
 
-    </style>
-    <script src="https://d3js.org/d3.v4.min.js"></script>
-    <script>
-      var width = $(window).width();
-      var height = $(window).height(); 
+  /* legend 
+  var sequentialScale = d3.scaleOrdinal(d3.schemeSet3)
+      .domain([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
 
-      var svg = d3.select("body").append("svg")                                  
-	  .attr("width", width)
-	  .attr("height", height)
-	  .call(d3.zoom().on("zoom", function () {
-	      svg.attr("transform", d3.event.transform)
-	  }))
-	  .append("g")
+  svg.append("g")
+    .attr("class", "legendSequential")
+    .attr("transform", "translate("+(width-140)+","+(height-300)+")");
 
-      
-      var color = d3.scaleOrdinal(d3.schemeCategory10);
+  var legendSequential = d3.legendColor()
+      .shapeWidth(30)
+      .cells(11)
+      .orient("vertical")
+      .title("Group number by color:")
+      .titleWidth(100)
+      .scale(sequentialScale) 
 
-      var simulation = d3.forceSimulation()
-	  .force("link", d3.forceLink().id(function(d) { return d.id; }))
-	  .force("charge", d3.forceManyBody())
-	  .force("center", d3.forceCenter(width / 2, height / 2));
-         
+  svg.select(".legendSequential")
+    .call(legendSequential); 
+*/
 
+  
+  d3.json("http://192.168.1.18/rest", function(error, graph) {
+      if (error) throw error;
+
+      const simulation = d3.forceSimulation()
+	    .nodes(graph.nodes)
+	    .force('link', d3.forceLink().id(d => d.id))
+	    .force('charge', d3.forceManyBody())
+	    .force('center', d3.forceCenter(width / 2, height / 2))
+	    .on('tick', ticked);
+
+      /* resizing */
       function updateWindow(){
 	  width = $(window).width();
 	  height = $(window).height(); 
 	  svg.attr("width", width).attr("height", height);
-	  simulation.force("center", d3.forceCenter(width / 2, height / 2));	  
+	  simulation.force("center", d3.forceCenter(width / 2, height / 2));
       }
       d3.select(window).on('resize.updatesvg', updateWindow);
 
-      d3.json("http://192.168.1.18/rest", function(error, graph) {
-	  if (error) throw error;
 
-	  var link = svg.append("g")
-	      .attr("class", "links")
-	      .selectAll("line")
-	      .data(graph.links)
-	      .enter().append("line")
-	      .attr("stroke-width", function(d) { return Math.sqrt(d.value); });
 
-	  var node = svg.append("g")
-	      .attr("class", "nodes")
-	      .selectAll("g")
-	      .data(graph.nodes)
-	      .enter().append("g")
-	  /*    
-	   var circles = node.append("circle")
-	   .attr("r", 5)
-	   .attr("fill", function(d) { return color(d.group); })
-	   .call(d3.drag()
-           .on("start", dragstarted)
-           .on("drag", dragged)
-           .on("end", dragended));
-	  */
+      
+      simulation.force('link')
+	  .links(graph.links);
 
-	  var circles = node.append("circle")
-	      .attr("r", 5)
-	      .attr("fill", function(d) { return color(d.group); });
+      const R = 6;
 
-	  // Create a drag handler and append it to the node object instead
-	  var drag_handler = d3.drag()
-	      .on("start", dragstarted)
-	      .on("drag", dragged)
-	      .on("end", dragended);
+      
 
-	  drag_handler(node);    
-	  var lables = node.append("text")
-	      .text(function(d) {
+
+      let link = svg.selectAll('line')
+	  .data(graph.links)
+	  .enter().append('line');
+
+      link  
+	  .attr('class', 'link')
+  	  .on('mouseover.tooltip', function(d) {
+      	      tooltip.transition()
+        	  .duration(300)
+        	  .style("opacity", .8);
+      	      tooltip.html("Source:"+ d.source.id + 
+			   "<p/>Target:" + d.target.id +
+			   "<p/>Strength:"  + d.value)
+        	  .style("left", (d3.event.pageX) + "px")
+        	  .style("top", (d3.event.pageY + 10) + "px");
+    	  })
+    	  .on("mouseout.tooltip", function() {
+	      tooltip.transition()
+	          .duration(100)
+	          .style("opacity", 0);
+	  })
+  	  .on('mouseout.fade', fade(1))
+	  .on("mousemove", function() {
+	      tooltip.style("left", (d3.event.pageX) + "px")
+	          .style("top", (d3.event.pageY + 10) + "px");
+	  });
+      ;
+
+      let node = svg.selectAll('.node')
+	  .data(graph.nodes)
+	  .enter().append('g')
+	  .attr('class', 'node')
+	  .call(d3.drag()
+    		.on("start", dragstarted)
+		.on("drag", dragged)
+		.on("end", dragended));;
+
+      node.append('circle')
+	  .attr('r', R)
+  	  .attr("fill", function(d) { return color(d.group);}) 	
+	  .on('mouseover.tooltip', function(d) {
+      	      tooltip.transition()
+        	  .duration(300)
+        	  .style("opacity", .8);
+      	      tooltip.html("Name:" + d.id + "<p/>group:" + d.group)
+        	  .style("left", (d3.event.pageX) + "px")
+        	  .style("top", (d3.event.pageY + 10) + "px");
+    	  })
+  	  .on('mouseover.fade', fade(0.1))
+	  .on("mouseout.tooltip", function() {
+              tooltip.transition()
+	          .duration(100)
+	          .style("opacity", 0);
+	  })
+  	  .on('mouseout.fade', fade(1))
+	  .on("mousemove", function() {
+	      tooltip.style("left", (d3.event.pageX) + "px")
+	          .style("top", (d3.event.pageY + 10) + "px");
+	  })
+  	  .on('dblclick',releasenode)
+      
+      
+      node.append('text')
+	  .attr('x', 0)
+	  .attr('dy', '.35em')
+	  .text(d => d.name);
+
+      var lables = node.append("text")
+	  .text(function(d) {
+	      if (d.group == 1)  /*Known AP*/
 		  return d.id;
-	      })
-	      .attr('x', 6)
-	      .attr('y', 3);
+	      else if (d.group == 2) /*Known Client*/
+		  return "";
+	      else if (d.group == 3) /*Unknown AP */
+		  return d.id;
+	      else if (d.group == 4) /*Unknown Client */
+		  return "";
+	      else
+		  return "";
+	  })
+	  .attr('x', 8)
+	  .attr('y', 5);
+      
+      function ticked() {
+	  link
+	      .attr('x1', d => d.source.x)
+	      .attr('y1', d => d.source.y)
+	      .attr('x2', d => d.target.x)
+	      .attr('y2', d => d.target.y);
 
-	  node.append("title")
-	      .text(function(d) { return d.id; });
-
-	  simulation
-	      .nodes(graph.nodes)
-	      .on("tick", ticked);
-
-	  simulation.force("link")
-	      .links(graph.links);
-
-	  function ticked() {
-	      link
-		  .attr("x1", function(d) { return d.source.x; })
-		  .attr("y1", function(d) { return d.source.y; })
-		  .attr("x2", function(d) { return d.target.x; })
-		  .attr("y2", function(d) { return d.target.y; });
-
-	      node
-		  .attr("transform", function(d) {
-		      return "translate(" + d.x + "," + d.y + ")";
-		  })
-	  }
-      });
+	  node
+	      .attr('transform', d => `translate(${d.x},${d.y})`);
+      }
 
       function dragstarted(d) {
 	  if (!d3.event.active) simulation.alphaTarget(0.3).restart();
@@ -168,10 +241,38 @@
 
       function dragended(d) {
 	  if (!d3.event.active) simulation.alphaTarget(0);
+	  //d.fx = null;
+	  //d.fy = null;
+      }
+      function releasenode(d) {
 	  d.fx = null;
 	  d.fy = null;
       }
+      
+      const linkedByIndex = {};
+      graph.links.forEach(d => {
+	  linkedByIndex[`${d.source.index},${d.target.index}`] = 1;
+      });
 
-    </script>
-  </body>
-</html>
+      function isConnected(a, b) {
+	  return linkedByIndex[`${a.index},${b.index}`] || linkedByIndex[`${b.index},${a.index}`] || a.index === b.index;
+      }
+
+      function fade(opacity) {
+	  return d => {
+	      node.style('stroke-opacity', function (o) {
+		  const thisOpacity = isConnected(d, o) ? 1 : opacity;
+		  this.setAttribute('fill-opacity', thisOpacity);
+		  return thisOpacity;
+	      });
+
+	      link.style('stroke-opacity', o => (o.source === d || o.target === d ? 1 : opacity));
+
+	  };
+      }
+
+      
+  })
+
+
+</script>
