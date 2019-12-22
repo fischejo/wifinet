@@ -1,0 +1,15 @@
+[Unit]
+Description=Wifinet Web Frontend
+ConditionPathExists=/opt/wifinet/
+
+[Service]
+ExecStart=/usr/local/bin/uwsgi --ini /opt/wifinet/website/website.ini
+DynamicUser=yes
+Restart=on-failure
+KillSignal=SIGQUIT
+Type=notify
+NotifyAccess=all
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+
+[Install]
+WantedBy=multi-user.target
