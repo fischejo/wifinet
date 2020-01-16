@@ -1,25 +1,25 @@
 # Installation
 
 ```bash
-# install dependencies
-sudo apt install python3-pip uwsgi uwsgi-plugin-python mongodb
-
 # download repository
-git clone https://github.com/pecheur/wifinet.git /tmp/wifinet
+git clone https://github.com/pecheur/wifinet.git wifinet
+cd wifinet
 
-# install
-sudo cp -R /tmp/wifinet /opt/wifinet
-sudo cp /opt/wifinet/website/website.service /etc/systemd/system/wifinet-website.service
-sudo cp /opt/wifinet/wifi/wifi@.service /etc/systemd/system/wifinet-wifi@.service
-sudo pip3 install -r opt/wifinet/requirements.txt
-
-# enable services
-sudo systemctl enable --now mongodb
-sudo systemctl enable --now wifinet-website.service
-sudo systemctl enable --now wifinet-wifi@wlan1.service
+sudo ./install.sh
 ```
 
 The website runs on port 80.
+
+# Prepare Raspian SD-Card
+
+Only tested under Ubuntu 16.08. 
+
+```bash
+wget -O raspbian_lite_latest.img  https://downloads.raspberrypi.org/raspbian_lite_latest
+sudo ./install.sh raspbian_lite_latest.img
+```
+
+
 
 # Hardware
 * Raspberry Pi 3 (Debian Buster)
