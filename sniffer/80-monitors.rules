@@ -1,0 +1,1 @@
+SUBSYSTEM=="net", ACTION=="add", ENV{ID_SERIAL}=="Manufacturer_Realtek_RTL8187__RTL8187_Wireless_00C0CA7BEEB8", NAME="mon0"

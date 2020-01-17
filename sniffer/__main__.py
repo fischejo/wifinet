@@ -64,7 +64,7 @@ def scan(iface, channel_weights, mongodb_url) :
 
 if __name__ == '__main__':
     # parse arguments
-    parser = argparse.ArgumentParser(prog="python3 -m wifi", description='Wifinet Sniffer')
+    parser = argparse.ArgumentParser(prog="python3 -m sniffer", description='Wifinet Sniffer')
     parser.add_argument('-i', '--iface', required=True, help="Interface of Wifi Card")
     parser.add_argument('-m', '--mongodb', default=MONGO_DB, help="Default: {}".format(MONGO_DB))
     args = parser.parse_args()

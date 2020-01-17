@@ -5,10 +5,7 @@ After=mongodb.service
 Requires=mongodb.service
 
 [Service]
-StandardOutput=file:/home/pi/mydaemon.log
 WorkingDirectory=/opt/wifinet/
-ExecStart=/usr/bin/python3 -m wifi --iface %I
+ExecStart=/usr/bin/python3 -m sniffer --iface %I
 Restart=on-failure
 
-[Install]
-WantedBy=multi-user.target

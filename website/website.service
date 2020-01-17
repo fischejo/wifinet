@@ -5,7 +5,7 @@ After=mongodb.service
 Requires=mongodb.service
 
 [Service]
-ExecStart=/usr/local/bin/uwsgi --ini /opt/wifinet/website/website.ini
+ExecStart=/usr/bin/uwsgi --ini /opt/wifinet/website/website.ini
 DynamicUser=yes
 Restart=on-failure
 KillSignal=SIGQUIT
