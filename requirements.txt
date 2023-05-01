@@ -1,4 +1,4 @@
-Flask==1.1.1
+Flask==2.3.2
 pymongo==2.4
 scapy==2.4.3
 systemd==0.16.1
